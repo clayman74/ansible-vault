@@ -1,2 +1,29 @@
 ---
-# defaults file for role
+
+vault:
+  service_dir: "{{ services_dir }}/vault"
+
+  host: "{{ private_network.address }}"
+  port: 8200
+
+  container:
+    image: vault:1.3.1
+    name: vault
+    restart: always
+    network: ''
+
+    syslog:
+      enabled: false
+      host: unixgram:///dev/log
+      tag: vault
+
+  service:
+    name: vault
+    tags:
+      - "{{ env }}"
+    meta:
+      hostname: "{{ ansible_hostname }}"
+      tier: "{{ env }}"
+
+  frontend:
+    domain: vault.example.com

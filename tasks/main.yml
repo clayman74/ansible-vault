@@ -1,2 +1,5 @@
 ---
-# tasks file for role
+
+- import_tasks: docker.yml
+  tags:
+    - vault

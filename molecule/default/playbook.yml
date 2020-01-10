@@ -1,0 +1,20 @@
+---
+
+- name: Converge
+  hosts: all
+  become: true
+
+  vars:
+    env: develop
+
+    services_dir: /opt/services
+
+    private_network: "{{ ansible_eth0['ipv4'] }}"
+
+  roles:
+    - role: docker
+    - role: "{{ lookup('env', 'MOLECULE_PROJECT_DIRECTORY') | basename }}"
+
+  tasks:
+    - name: Install test requirements
+      apt: name=curl

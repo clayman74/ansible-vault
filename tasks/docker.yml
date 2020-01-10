@@ -1,0 +1,13 @@
+---
+
+- name: Prepare folders
+  file: path={{ vault.service_dir }} state=directory
+
+- name: Assemble config files
+  template: src={{ item.src }}.j2 dest={{ item.dest }}
+  with_items:
+    - src: docker-compose.yml
+      dest: "{{ vault.service_dir }}/docker-compose.yml"
+    - src: config.hcl
+      dest: "{{ vault.service_dir }}/config.hcl"
+  notify: restart vault

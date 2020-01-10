@@ -1,0 +1,17 @@
+---
+
+version: '3.5'
+
+services:
+  server:
+    container_name: {{ vault.container.name }}
+    image: {{ vault.container.image }}
+    command: vault server -config=/etc/vault/config.hcl
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - {{ vault.host }}:{{ vault.port }}:8200
+    restart: {{ vault.container.restart }}
+    volumes:
+      - ./config.hcl:/etc/vault/config.hcl
+      - ./storage:/vault/file

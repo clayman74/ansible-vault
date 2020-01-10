@@ -1,2 +1,7 @@
 ---
-# handlers file for role
+
+- name: Restart vault service
+  command: docker-compose up -d
+  args:
+    chdir: "{{ vault.service_dir }}"
+  listen: "restart vault"

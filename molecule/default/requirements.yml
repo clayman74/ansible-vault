@@ -1,0 +1,5 @@
+---
+
+- src: git+https://github.com/clayman74/ansible-docker
+  version: 1.2.0
+  name: docker
