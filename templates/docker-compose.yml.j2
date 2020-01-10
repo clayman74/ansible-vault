@@ -9,6 +9,13 @@ services:
     command: vault server -config=/etc/vault/config.hcl
     cap_add:
       - IPC_LOCK
+{% if vault.container.syslog.enabled %}
+    logging:
+      driver: syslog
+      options:
+        syslog-address: "{{ vault.container.syslog.host }}"
+        tag: {{ vault.container.syslog.tag }}
+{% endif %}
     ports:
       - {{ vault.host }}:{{ vault.port }}:8200
     restart: {{ vault.container.restart }}
