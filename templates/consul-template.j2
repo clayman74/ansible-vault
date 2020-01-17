@@ -1,0 +1,56 @@
+upstream {{ item.backend.name }} {
+    least_conn;
+{% raw %}
+    {{ range service {% endraw %}"{{ item.backend.service }}"{% raw %} }}
+    server {{.Address}}:{{.Port}} max_fails=3 fail_timeout=60 weight=1;
+    {{ else }}
+    server 127.0.0.1:65535; # force a 502
+    {{ end }}
+{% endraw %}
+}
+
+server {
+    listen 80;
+    server_name {{ item.domain }};
+
+{% if letsencrypt|default(False) %}
+    location ~ /.well-known {
+        root /var/www;
+        allow all;
+    }
+{% endif %}
+
+    location / {
+        return 301 https://$server_name$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name {{ item.domain }};
+
+{% if letsencrypt|default(False) %}
+    ssl_certificate /etc/letsencrypt/live/{{ letsencrypt.domain }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ letsencrypt.domain }}/privkey.pem;
+{% else %}
+    ssl_certificate /etc/nginx/certs/{{ item.name }}.pem;
+    ssl_certificate_key /etc/nginx/certs/{{ item.name }}.key;
+{% endif %}
+    ssl_verify_depth 3;
+
+    ssl_session_timeout 5m;
+    ssl_session_cache shared:SSL:10m;
+
+    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
+    ssl_ciphers 'ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-DSS-AES128-GCM-SHA256:kEDH+AESGCM:ECDHE-RSA-AES128-SHA256:ECDHE-ECDSA-AES128-SHA256:ECDHE-RSA-AES128-SHA:ECDHE-ECDSA-AES128-SHA:ECDHE-RSA-AES256-SHA384:ECDHE-ECDSA-AES256-SHA384:ECDHE-RSA-AES256-SHA:ECDHE-ECDSA-AES256-SHA:DHE-RSA-AES128-SHA256:DHE-RSA-AES128-SHA:DHE-DSS-AES128-SHA256:DHE-RSA-AES256-SHA256:DHE-DSS-AES256-SHA:DHE-RSA-AES256-SHA:AES128-GCM-SHA256:AES256-GCM-SHA384:AES128-SHA256:AES256-SHA256:AES128-SHA:AES256-SHA:AES:CAMELLIA:DES-CBC3-SHA:!aNULL:!eNULL:!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:!KRB5-DES-CBC3-SHA';
+    ssl_prefer_server_ciphers on;
+
+    location / {
+        proxy_pass                            http://{{ item.backend.name }};
+        proxy_set_header  Host                $http_host;   # required for docker client's sake
+        proxy_set_header  X-Real-IP           $remote_addr; # pass on real client's IP
+        proxy_set_header  X-Forwarded-For     $proxy_add_x_forwarded_for;
+        proxy_set_header  X-Forwarded-Proto   $scheme;
+        proxy_read_timeout                    900;
+    }
+}
