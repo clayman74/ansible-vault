@@ -16,14 +16,3 @@ vault:
       enabled: false
       host: unixgram:///dev/log
       tag: vault
-
-  service:
-    name: vault
-    tags:
-      - "{{ env }}"
-    meta:
-      hostname: "{{ ansible_hostname }}"
-      tier: "{{ env }}"
-
-  frontend:
-    domain: vault.example.com
